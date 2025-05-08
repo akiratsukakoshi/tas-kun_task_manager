@@ -1,0 +1,19 @@
+{
+  "name": "karen-bot",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/bot.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "googleapis": "^133.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.30"
+  }
+}

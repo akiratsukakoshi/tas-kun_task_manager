@@ -1,0 +1,33 @@
+workflows:
+  add_schedule:
+    description: 予定追加
+    steps:
+      - parse_date
+      - confirm_details
+      - add_to_calendar
+      - reply_success
+  get_schedule:
+    description: 予定参照
+    steps:
+      - parse_date_range
+      - fetch_from_calendar
+      - reply_schedule
+  delete_schedule:
+    description: 予定削除
+    steps:
+      - identify_event
+      - delete_from_calendar
+      - reply_success
+  modify_schedule:
+    description: 予定変更
+    steps:
+      - identify_event
+      - parse_new_details
+      - update_calendar
+      - reply_success
+  remind:
+    description: リマインド設定
+    steps:
+      - parse_remind_time
+      - set_reminder
+      - reply_success 

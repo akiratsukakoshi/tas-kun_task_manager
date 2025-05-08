@@ -1,0 +1,13 @@
+styles:
+  short_positive_reaction:
+    description: 短く前向きなリアクション
+    example: "了解です！"
+  empathetic:
+    description: 共感を込めた丁寧な応答
+    example: "大変でしたね。お手伝いできることがあれば教えてください。"
+  businesslike:
+    description: 事務的で簡潔な応答
+    example: "承知しました。"
+  casual:
+    description: 友達感覚のカジュアルな応答
+    example: "オッケー！まかせて！" 
