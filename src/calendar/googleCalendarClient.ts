@@ -39,7 +39,7 @@ export class GoogleCalendarClient {
     const res = await this.calendar.events.list({
       calendarId: this.calendarId,
       timeMin: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      maxResults: 10,
+      maxResults: 50,
       singleEvents: true,
       orderBy: 'startTime',
     });
