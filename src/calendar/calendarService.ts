@@ -7,9 +7,8 @@ export class CalendarService {
     this.client = new GoogleCalendarClient(apiKey, calendarId);
   }
 
-  async getEvents(): Promise<CalendarEvent[]> {
-    // TODO: 実装
-    return this.client.listEvents();
+  async getEvents(start?: Date, end?: Date): Promise<CalendarEvent[]> {
+    return this.client.listEvents(start, end);
   }
 
   async addEvent(event: CalendarEvent): Promise<string> {

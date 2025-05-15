@@ -1,7 +1,8 @@
 import { IntentResult } from './intentClassifier.js';
 import { CalendarService } from '../calendar/calendarService.js';
 import { formatTextResponse, formatDate, formatScheduleList } from '../formatter/responseFormatter.js';
-import { parseJapaneseDate } from '../utils/dateUtils.js';
+import { parseJapaneseDate, parseJapaneseDateRange, parseDesiredDuration, findFreeSlots, formatFreeTimeList } from '../utils/dateUtils.js';
+import { debugLog } from '../utils/logger.js';
 
 // cfgからAPIキーとカレンダーIDを取得してサービスを初期化
 function getCalendarService(cfg: any): CalendarService {
@@ -31,7 +32,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       // ユーザー発話から日付・時間帯を抽出
       const text = message.content || '';
       const baseDateStr = parseJapaneseDate(text);
-      console.log('DEBUG: 発話:', text, '→ パース結果:', baseDateStr);
+      debugLog('発話:', text, '→ パース結果:', baseDateStr);
       if (baseDateStr) {
         const baseDate = new Date(baseDateStr);
         // 同じ日付の予定のみ抽出（時間帯指定は今後拡張）
@@ -41,7 +42,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
                         start.getMonth() === baseDate.getMonth() &&
                         start.getDate() === baseDate.getDate();
           if (match) {
-            console.log('DEBUG: 該当予定:', e.summary, e.start, e.end);
+            debugLog('該当予定:', e.summary, e.start, e.end);
           }
           return match;
         });
@@ -63,6 +64,27 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
     }
     case 'remind':
       return formatTextResponse('リマインド', 'リマインドを設定します（ダミー応答）');
+    case 'find_free_time': {
+      const text = message.content || '';
+      const { startDate, endDate, timeRange } = parseJapaneseDateRange(text);
+      const durationMinutes = parseDesiredDuration(text) || 60;
+      debugLog('find_free_time: 発話:', text);
+      debugLog('find_free_time: パース結果:', { startDate, endDate, timeRange, durationMinutes });
+      // カレンダーから指定範囲の予定を取得
+      const events = await calendar.getEvents(startDate, endDate);
+      debugLog('find_free_time: 取得予定件数:', events.length);
+      if (events.length > 0) {
+        debugLog('find_free_time: 予定リスト:', events.map(e => ({ summary: e.summary, start: e.start, end: e.end })));
+      }
+      // 空き時間を計算（findFreeSlotsは今後実装予定）
+      const freeSlots = findFreeSlots(events, { startDate, endDate, timeRange, durationMinutes });
+      debugLog('find_free_time: 空き時間候補:', freeSlots);
+      // 結果を返す（formatFreeTimeListは今後実装予定）
+      if (!freeSlots || freeSlots.length === 0) {
+        return formatTextResponse('空き時間検索', 'ご希望の条件で空き時間が見つかりませんでした。');
+      }
+      return formatFreeTimeList(startDate, freeSlots, durationMinutes);
+    }
     default:
       return null;
   }

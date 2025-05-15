@@ -35,14 +35,16 @@ export class GoogleCalendarClient {
     this.calendarId = calendarId;
   }
 
-  async listEvents(): Promise<CalendarEvent[]> {
-    const res = await this.calendar.events.list({
+  async listEvents(start?: Date, end?: Date): Promise<CalendarEvent[]> {
+    const params: any = {
       calendarId: this.calendarId,
-      timeMin: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       maxResults: 50,
       singleEvents: true,
       orderBy: 'startTime',
-    });
+    };
+    if (start) params.timeMin = start.toISOString();
+    if (end) params.timeMax = end.toISOString();
+    const res = await this.calendar.events.list(params);
     return (res.data.items || []).map(e => ({
       id: e.id ?? undefined,
       summary: e.summary || '',

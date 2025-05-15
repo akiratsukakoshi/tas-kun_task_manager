@@ -30,4 +30,11 @@ workflows:
     steps:
       - parse_remind_time
       - set_reminder
-      - reply_success 
+      - reply_success
+  find_free_time:
+    description: 空き時間検索
+    steps:
+      - parse_date_range
+      - fetch_from_calendar
+      - find_free_slots
+      - reply_free_time 
