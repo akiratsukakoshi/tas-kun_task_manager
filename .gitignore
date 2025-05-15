@@ -22,4 +22,7 @@ dist/
 build/
 
 # Config
-config/config.yaml 
+config/config.yaml
+
+# Token
+token.json 

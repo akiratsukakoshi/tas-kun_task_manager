@@ -1,5 +1,8 @@
 // 型定義がないため、必要に応じて src/types/japanese-date.d.ts を作成してください
 import { getDate } from 'japanese-date';
+import { callOpenAIChatWithSystemPrompt } from '../llm/openaiClient.js';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * 日本語の自然言語日付をISO8601文字列に変換する（japanese-date利用）
@@ -100,4 +103,51 @@ export function formatFreeTimeList(date: Date, slots: { start: Date, end: Date }
     return `${s.getHours().toString().padStart(2, '0')}:${s.getMinutes().toString().padStart(2, '0')}～${e.getHours().toString().padStart(2, '0')}:${e.getMinutes().toString().padStart(2, '0')}`;
   });
   return `${date.getMonth() + 1}月${date.getDate()}日の${durationMinutes}分以上の空き時間候補:\n${lines.join('\n')}`;
+}
+
+export async function parseJapaneseDateHybrid(text: string, now: Date): Promise<string | null> {
+  const parsed = parseJapaneseDate(text);
+  if (parsed) return parsed;
+  const promptPath = path.join(__dirname, '../../config/system_prompts/get_schedule.md');
+  const systemPrompt = fs.readFileSync(promptPath, 'utf-8');
+  const userPrompt = `ユーザー: ${text}\n現在日時: ${now.toISOString()}\n出力:`;
+  try {
+    const result = await callOpenAIChatWithSystemPrompt(userPrompt, systemPrompt);
+    const match = result.match(/"start":\s*"([^"]+)"/);
+    if (match) return match[1];
+  } catch (e) {}
+  return null;
+}
+
+export async function parseJapaneseDateRangeHybrid(text: string, now: Date): Promise<{ startDate: Date, endDate: Date, timeRange?: string, durationMinutes?: number } | null> {
+  const base = getDate(text);
+  if (base && base.length > 0) {
+    const startDate = new Date(base[0]);
+    let endDate = new Date(startDate);
+    endDate.setHours(23, 59, 59, 999);
+    let timeRange: string | undefined = undefined;
+    if (text.includes('午後')) timeRange = 'afternoon';
+    if (text.includes('午前')) timeRange = 'morning';
+    return { startDate, endDate, timeRange };
+  }
+  // LLM fallback
+  const promptPath = path.join(__dirname, '../../config/system_prompts/find_free_time.md');
+  const systemPrompt = fs.readFileSync(promptPath, 'utf-8');
+  const userPrompt = `ユーザー: ${text}\n現在日時: ${now.toISOString()}\n出力:`;
+  try {
+    const result = await callOpenAIChatWithSystemPrompt(userPrompt, systemPrompt);
+    const startMatch = result.match(/"start":\s*"([^"]+)"/);
+    const endMatch = result.match(/"end":\s*"([^"]+)"/);
+    const durationMatch = result.match(/"duration_minutes":\s*(\d+)/);
+    if (startMatch && endMatch) {
+      const startDate = new Date(startMatch[1]);
+      const endDate = new Date(endMatch[1]);
+      let durationMinutes = durationMatch ? parseInt(durationMatch[1], 10) : undefined;
+      let timeRange: string | undefined = undefined;
+      if (text.includes('午後')) timeRange = 'afternoon';
+      if (text.includes('午前')) timeRange = 'morning';
+      return { startDate, endDate, timeRange, durationMinutes };
+    }
+  } catch (e) {}
+  return null;
 } 

@@ -1,7 +1,7 @@
 import { IntentResult, replyAsCharacter } from './intentClassifier.js';
 import { CalendarService } from '../calendar/calendarService.js';
 import { formatTextResponse, formatDate, formatScheduleList } from '../formatter/responseFormatter.js';
-import { parseJapaneseDate, parseJapaneseDateRange, parseDesiredDuration, findFreeSlots, formatFreeTimeList } from '../utils/dateUtils.js';
+import { parseJapaneseDate, parseJapaneseDateRange, parseDesiredDuration, findFreeSlots, formatFreeTimeList, parseJapaneseDateHybrid, parseJapaneseDateRangeHybrid } from '../utils/dateUtils.js';
 import { debugLog } from '../utils/logger.js';
 
 // cfgからAPIキーとカレンダーIDを取得してサービスを初期化
@@ -29,7 +29,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
     case 'get_schedule': {
       // ユーザー発話から日付・時間帯を抽出
       const text = message.content || '';
-      const baseDateStr = parseJapaneseDate(text);
+      const baseDateStr = await parseJapaneseDateHybrid(text, new Date());
       debugLog('発話:', text, '→ パース結果:', baseDateStr);
       function toYMD(date: Date) {
         return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -72,8 +72,21 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       return formatTextResponse('リマインド', 'リマインドを設定します（ダミー応答）');
     case 'find_free_time': {
       const text = message.content || '';
-      const { startDate, endDate, timeRange } = parseJapaneseDateRange(text);
-      const durationMinutes = parseDesiredDuration(text) || 60;
+      const rangeResult = await parseJapaneseDateRangeHybrid(text, new Date());
+      let startDate, endDate, timeRange, durationMinutes;
+      if (rangeResult) {
+        startDate = rangeResult.startDate;
+        endDate = rangeResult.endDate;
+        timeRange = rangeResult.timeRange;
+        durationMinutes = rangeResult.durationMinutes ?? parseDesiredDuration(text) ?? 60;
+      } else {
+        // fallback: 旧実装
+        const fallback = parseJapaneseDateRange(text);
+        startDate = fallback.startDate;
+        endDate = fallback.endDate;
+        timeRange = fallback.timeRange;
+        durationMinutes = parseDesiredDuration(text) ?? 60;
+      }
       debugLog('find_free_time: 発話:', text);
       debugLog('find_free_time: パース結果:', { startDate, endDate, timeRange, durationMinutes });
       // カレンダーから指定範囲の予定を取得
