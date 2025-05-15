@@ -37,4 +37,13 @@ workflows:
       - parse_date_range
       - fetch_from_calendar
       - find_free_slots
-      - reply_free_time 
+      - reply_free_time
+  unknown:
+    description: 雑談やワークフローに該当しない発話
+    steps: []
+    examples:
+      - こんにちは
+      - 元気？
+      - 雑談しよう
+      - おはよう
+      - ありがとう 

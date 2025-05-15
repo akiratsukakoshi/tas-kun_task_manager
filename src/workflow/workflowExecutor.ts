@@ -1,4 +1,4 @@
-import { IntentResult } from './intentClassifier.js';
+import { IntentResult, replyAsCharacter } from './intentClassifier.js';
 import { CalendarService } from '../calendar/calendarService.js';
 import { formatTextResponse, formatDate, formatScheduleList } from '../formatter/responseFormatter.js';
 import { parseJapaneseDate, parseJapaneseDateRange, parseDesiredDuration, findFreeSlots, formatFreeTimeList } from '../utils/dateUtils.js';
@@ -27,24 +27,30 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       return formatTextResponse('予定追加', `予定を追加しました（ID: ${eventId}）`);
     }
     case 'get_schedule': {
-      const events = await calendar.getEvents();
-      if (events.length === 0) return formatTextResponse('予定一覧', '予定はありません。');
       // ユーザー発話から日付・時間帯を抽出
       const text = message.content || '';
       const baseDateStr = parseJapaneseDate(text);
       debugLog('発話:', text, '→ パース結果:', baseDateStr);
+      function toYMD(date: Date) {
+        return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      }
       if (baseDateStr) {
         const baseDate = new Date(baseDateStr);
-        // 同じ日付の予定のみ抽出（時間帯指定は今後拡張）
+        const startOfDay = new Date(baseDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(baseDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        // 期間指定で予定を取得
+        const events = await calendar.getEvents(startOfDay, endOfDay);
+        const baseDateYMD = toYMD(baseDate);
         const filtered = events.filter(e => {
           const start = new Date(e.start);
-          const match = start.getFullYear() === baseDate.getFullYear() &&
-                        start.getMonth() === baseDate.getMonth() &&
-                        start.getDate() === baseDate.getDate();
-          if (match) {
+          const startYMD = toYMD(start);
+          debugLog('get_schedule: 日付比較', { baseDateYMD, startYMD, raw: e.start });
+          if (startYMD === baseDateYMD) {
             debugLog('該当予定:', e.summary, e.start, e.end);
           }
-          return match;
+          return startYMD === baseDateYMD;
         });
         if (filtered.length === 0) return formatTextResponse('予定一覧', '該当日の予定はありません。');
         return formatScheduleList(baseDate, filtered);
@@ -86,6 +92,10 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       return formatFreeTimeList(startDate, freeSlots, durationMinutes);
     }
     default:
+      // intentがunknownならキャラクター応答
+      if (intentResult.intent === 'unknown') {
+        return await replyAsCharacter(message.content);
+      }
       return null;
   }
 } 
