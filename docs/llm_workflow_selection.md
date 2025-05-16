@@ -11,7 +11,7 @@
 
 1. **ユーザーが自然言語で指示を送信**
 2. **インテント判定**
-   - `src/workflow/intentClassifier.ts` でLLM（またはルールベース）により「add_schedule」「get_schedule」「delete_schedule」「modify_schedule」などのワークフローを判定
+   - `src/workflow/intentClassifier.ts` でLLMにより「add_schedule」「get_schedule」「delete_schedule」「modify_schedule」などのワークフローを判定
 3. **ワークフローごとの実行分岐**
    - `src/workflow/workflowExecutor.ts` でインテントに応じた処理に分岐
 4. **必要情報の抽出**
@@ -33,7 +33,7 @@
 
 ## 2. 関連ファイル・ディレクトリ
 
-- `src/workflow/intentClassifier.ts` … インテント判定（LLM/ルールベース）
+- `src/workflow/intentClassifier.ts` … インテント判定（LLM）
 - `src/workflow/workflowExecutor.ts` … ワークフロー実行のメインロジック
 - `src/workflow/eventSelector.ts` … LLMによる情報抽出・ルート判定
 - `src/workflow/conversationContext.ts` … 会話状態（pendingEvent等）の管理
@@ -44,22 +44,19 @@
 
 ## 3. ワークフロー追加時に修正すべきファイル一覧
 
-1. **intentClassifier.ts**
-   - 新しいワークフロー名・インテントを追加
-   - LLMプロンプトやルールベース辞書の拡張
-2. **workflowExecutor.ts**
+1. **workflowExecutor.ts**
    - `switch`文に新しいワークフローのcaseを追加
    - 必要に応じて仮説確認・pendingEvent管理の分岐も追加
-3. **eventSelector.ts**
+2. **eventSelector.ts**
    - LLM抽出プロンプトの拡張（新ワークフロー用の情報抽出）
    - ルート判定や情報抽出関数の追加
-4. **formatter/responseFormatter.ts**
+3. **formatter/responseFormatter.ts**
    - 新ワークフローの返答フォーマット追加
-5. **llm/openaiClient.ts**
+4. **llm/openaiClient.ts**
    - 必要に応じてLLM呼び出しの拡張
-6. **config/workflows.yaml**
+5. **config/workflows.yaml**
    - 新しいワークフローの定義・説明・ステップを追加
-7. **config/system_prompts/**
+6. **config/system_prompts/**
    - 新しいワークフロー用のシステムプロンプトMarkdownファイルを追加
 
 ---
