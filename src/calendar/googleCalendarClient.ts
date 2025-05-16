@@ -6,6 +6,7 @@ export interface CalendarEvent {
   start: string; // ISO8601
   end: string;   // ISO8601
   description?: string;
+  location?: string;
 }
 
 function getOAuth2Client() {
@@ -51,6 +52,7 @@ export class GoogleCalendarClient {
       start: e.start?.dateTime || e.start?.date || '',
       end: e.end?.dateTime || e.end?.date || '',
       description: e.description || '',
+      location: e.location || '',
     }));
   }
 
@@ -60,6 +62,7 @@ export class GoogleCalendarClient {
       requestBody: {
         summary: event.summary,
         description: event.description,
+        location: event.location,
         start: { dateTime: event.start },
         end: { dateTime: event.end },
       },
@@ -82,6 +85,7 @@ export class GoogleCalendarClient {
       requestBody: {
         summary: event.summary,
         description: event.description,
+        location: event.location,
         start: event.start ? { dateTime: event.start } : undefined,
         end: event.end ? { dateTime: event.end } : undefined,
       },

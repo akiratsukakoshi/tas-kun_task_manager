@@ -62,4 +62,25 @@ export function formatScheduleList(date: Date, events: any[]): string {
     return `${i + 1}. ${e.summary}（${timeStr}）`;
   });
   return `${dateStr}の予定ですね。\n${lines.join('\n')}\n詳細を知りたい予定や変更が必要な予定はありますか？`;
+}
+
+/**
+ * 予定の詳細情報を日本語でフォーマット
+ */
+export function formatScheduleDetail(event: {
+  summary: string;
+  start: string;
+  end: string;
+  location?: string;
+  description?: string;
+}): string {
+  const start = new Date(event.start);
+  const end = new Date(event.end);
+  const dateStr = `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日`;
+  const timeStr = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}` +
+    `-${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+  let result = `タイトル: ${event.summary}\n日時: ${dateStr} ${timeStr}`;
+  if (event.location) result += `\n場所: ${event.location}`;
+  if (event.description) result += `\n説明: ${event.description}`;
+  return result;
 } 
