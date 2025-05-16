@@ -16,7 +16,6 @@ karen/
 │   │   ├── contextManager.ts         # ユーザー・チャンネル情報管理
 │   ├── calendar/
 │   │   ├── googleCalendarClient.ts   # Google Calendar APIラッパー
-│   │   ├── calendarService.ts        # カレンダーCRUD抽象化
 │   ├── workflow/
 │   │   ├── intentClassifier.ts       # LLMによる意図判定
 │   │   ├── workflowExecutor.ts       # workflows.yamlに基づく分岐
@@ -58,7 +57,6 @@ karen/
 
 ### src/calendar/
 - **googleCalendarClient.ts**: Google Calendar APIとの連携・CRUD操作のラッパー。
-- **calendarService.ts**: intentに応じたカレンダー操作の抽象化。
 
 ### src/workflow/
 - **intentClassifier.ts**: LLMとYAMLルールを用いた意図判定。

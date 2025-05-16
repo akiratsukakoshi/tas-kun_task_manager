@@ -1,5 +1,5 @@
 import { IntentResult, replyAsCharacter } from './intentClassifier.js';
-import { CalendarService } from '../calendar/calendarService.js';
+import { GoogleCalendarClient, CalendarEvent } from '../calendar/googleCalendarClient.js';
 import { formatTextResponse, formatDate, formatScheduleList } from '../formatter/responseFormatter.js';
 import { parseJapaneseDate, parseJapaneseDateRange, parseDesiredDuration, findFreeSlots, formatFreeTimeList, parseJapaneseDateHybrid, parseJapaneseDateRangeHybrid } from '../utils/dateUtils.js';
 import { debugLog } from '../utils/logger.js';
@@ -7,15 +7,15 @@ import { extractEventCriteria, findTargetEvent, extractUpdateFields, llmDecideRo
 import { getConversationContext, setConversationContext, clearConversationContext } from './conversationContext.js';
 
 // cfgからAPIキーとカレンダーIDを取得してサービスを初期化
-function getCalendarService(cfg: any): CalendarService {
-  return new CalendarService(
+function getGoogleCalendarClient(cfg: any): GoogleCalendarClient {
+  return new GoogleCalendarClient(
     process.env.GOOGLE_API_KEY || '',
     cfg.calendar?.default_calendar_id || ''
   );
 }
 
 export async function executeWorkflow(intentResult: IntentResult, message: any, cfg: any): Promise<string | null> {
-  const calendar = getCalendarService(cfg);
+  const calendar = getGoogleCalendarClient(cfg);
   switch (intentResult.intent) {
     case 'add_schedule': {
       const text = message.content || '';
@@ -49,7 +49,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
         const endOfDay = new Date(baseDate);
         endOfDay.setHours(23, 59, 59, 999);
         // 期間指定で予定を取得
-        const events = await calendar.getEvents(startOfDay, endOfDay);
+        const events = await calendar.listEvents(startOfDay, endOfDay);
         const baseDateYMD = toYMD(baseDate);
         const filtered = events.filter(e => {
           const start = new Date(e.start);
@@ -116,7 +116,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       debugLog('find_free_time: 発話:', text);
       debugLog('find_free_time: パース結果:', { startDate, endDate, timeRange, durationMinutes });
       // カレンダーから指定範囲の予定を取得
-      const events = await calendar.getEvents(startDate, endDate);
+      const events = await calendar.listEvents(startDate, endDate);
       debugLog('find_free_time: 取得予定件数:', events.length);
       if (events.length > 0) {
         debugLog('find_free_time: 予定リスト:', events.map(e => ({ summary: e.summary, start: e.start, end: e.end })));
@@ -140,7 +140,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
           const info = ctx.pendingEvent;
           const start = new Date(info.start as string);
           const end = info.end ? new Date(info.end as string) : new Date(start.getTime() + 60 * 60 * 1000);
-          const event = {
+          const event: CalendarEvent = {
             summary: info.summary!,
             start: info.start!,
             end: info.end ? info.end : end.toISOString(),
@@ -153,7 +153,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
         // delete
         if ((ctx.pendingEvent as any).date && ctx.pendingEvent.summary) {
           const info = ctx.pendingEvent;
-          const allEvents = await calendar.getEvents();
+          const allEvents = await calendar.listEvents();
           const dateVal = (info as any).date;
           const target = allEvents.find(e => {
             if (!dateVal) return false;
@@ -184,7 +184,7 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
         // modify
         if (ctx.pendingEvent.start && ctx.pendingEvent.summary) {
           const info = ctx.pendingEvent;
-          const allEvents = await calendar.getEvents();
+          const allEvents = await calendar.listEvents();
           const target = allEvents.find(e => {
             if (!info.start) return false;
             const eventDate = new Date(e.start);
