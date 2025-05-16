@@ -3,6 +3,10 @@ import { getDate } from 'japanese-date';
 import { callOpenAIChatWithSystemPrompt } from '../llm/openaiClient.js';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * 日本語の自然言語日付をISO8601文字列に変換する（japanese-date利用）

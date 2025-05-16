@@ -98,3 +98,7 @@ karen/
 
 ## ライセンス
 MIT 
+
+## ドキュメント
+
+- [LLMの判断によるworkflow選択＆実行モデル](docs/llm_workflow_selection.md) 

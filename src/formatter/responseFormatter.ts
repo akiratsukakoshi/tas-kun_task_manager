@@ -51,13 +51,15 @@ export function formatDiscordEmbed(options: {
 /**
  * 日付ごとの予定リストを日本語でフォーマット
  */
-export function formatScheduleList(date: Date, events: { summary: string, start: string, end: string }[]): string {
+export function formatScheduleList(date: Date, events: any[]): string {
+  if (!events.length) return '予定はありません。';
   const dateStr = format(date, 'M月d日（E）', { locale: ja });
-  const lines = events.map(e => {
+  const lines = events.map((e, i) => {
     const start = new Date(e.start);
     const end = new Date(e.end);
-    const timeStr = `${format(start, 'HH:mm')}〜${format(end, 'HH:mm')}`;
-    return `・${e.summary}（${timeStr}）`;
+    const timeStr = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}` +
+      `-${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+    return `${i + 1}. ${e.summary}（${timeStr}）`;
   });
   return `${dateStr}の予定ですね。\n${lines.join('\n')}\n詳細を知りたい予定や変更が必要な予定はありますか？`;
 } 
