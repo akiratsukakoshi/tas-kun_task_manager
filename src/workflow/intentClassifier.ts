@@ -44,7 +44,29 @@ export async function classifyIntentWithLLM(message: string): Promise<IntentResu
 }
 
 export async function replyAsCharacter(message: string): Promise<string> {
-  const character = loadYaml<{ character: { persona: string } }>('config/character.yaml');
+  // 自己紹介・できることリストのキーワード
+  const introKeywords = [
+    '自己紹介', 'できること', '何ができる', 'help', '紹介', '使い方', 'ヘルプ', 'どんなこと', 'どんな機能', 'どんなことができる', 'あなたは誰', 'あなたについて', 'who are you', 'what can you do'
+  ];
+  const lowerMsg = message.toLowerCase();
+  if (introKeywords.some(k => message.includes(k) || lowerMsg.includes(k))) {
+    // character.yamlのpersonaとname取得
+    const characterYaml = await loadYaml<{ character: { persona: string; name?: string } }>('config/character.yaml');
+    const persona = characterYaml.character.persona || '';
+    const charName = characterYaml.character.name || 'キャラクター';
+    // workflows.yamlのワークフローリスト取得
+    const { workflows } = await loadWorkflows();
+    // unknown以外をリストアップ
+    const workflowList = Object.entries(workflows)
+      .filter(([key]) => key !== 'unknown')
+      .map(([_, wf]) => `・${wf.description}`)
+      .join('\n');
+    // LLMでキャラクターになりきった自己紹介文を生成
+    const intro = await callOpenAIChatWithSystemPrompt(`${charName}として自己紹介してください。`, persona);
+    return `${intro}\n\n現在、以下のことができます：\n${workflowList}`;
+  }
+  // 通常のキャラクター応答
+  const character = await loadYaml<{ character: { persona: string } }>('config/character.yaml');
   return callOpenAIChatWithSystemPrompt(message, character.character.persona);
 }
 
