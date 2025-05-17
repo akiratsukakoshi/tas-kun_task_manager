@@ -73,6 +73,7 @@ export function formatScheduleDetail(event: {
   end: string;
   location?: string;
   description?: string;
+  htmlLink?: string;
 }): string {
   const start = new Date(event.start);
   const end = new Date(event.end);
@@ -82,5 +83,6 @@ export function formatScheduleDetail(event: {
   let result = `タイトル: ${event.summary}\n日時: ${dateStr} ${timeStr}`;
   if (event.location) result += `\n場所: ${event.location}`;
   if (event.description) result += `\n説明: ${event.description}`;
+  if (event.htmlLink) result += `\nURL: ${event.htmlLink}`;
   return result;
 } 

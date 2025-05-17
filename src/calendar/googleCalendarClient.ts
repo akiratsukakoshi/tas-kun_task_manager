@@ -7,6 +7,7 @@ export interface CalendarEvent {
   end: string;   // ISO8601
   description?: string;
   location?: string;
+  htmlLink?: string; // イベントのGoogleカレンダーURL
 }
 
 function getOAuth2Client() {
@@ -53,6 +54,7 @@ export class GoogleCalendarClient {
       end: e.end?.dateTime || e.end?.date || '',
       description: e.description || '',
       location: e.location || '',
+      htmlLink: e.htmlLink || '',
     }));
   }
 

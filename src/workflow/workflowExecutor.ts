@@ -1,6 +1,6 @@
 import { IntentResult, replyAsCharacter } from './intentClassifier.js';
 import { GoogleCalendarClient, CalendarEvent } from '../calendar/googleCalendarClient.js';
-import { formatTextResponse, formatDate, formatScheduleList } from '../formatter/responseFormatter.js';
+import { formatTextResponse, formatDate, formatScheduleList, formatScheduleDetail } from '../formatter/responseFormatter.js';
 import { parseJapaneseDate, parseJapaneseDateRange, parseDesiredDuration, findFreeSlots, formatFreeTimeList, parseJapaneseDateHybrid, parseJapaneseDateRangeHybrid } from '../utils/dateUtils.js';
 import { debugLog } from '../utils/logger.js';
 import { extractEventCriteria, findTargetEvent, extractUpdateFields, llmDecideRoute, filterEventsByTitleAndDate, extractEventInfoWithLLM } from './eventSelector.js';
@@ -35,8 +35,22 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       return `${info.summary} ${dateStr} ${timeStr} の予定を追加します。よろしいですか？`;
     }
     case 'get_schedule': {
+      const ctx = getConversationContext();
+      const text = message.content?.trim();
+      // 番号指定で詳細取得
+      if (ctx.lastScheduleList && ctx.lastScheduleList.length > 0 && text) {
+        const match = text.match(/^(\d+)の詳細/);
+        if (match) {
+          const idx = parseInt(match[1], 10) - 1;
+          if (idx >= 0 && idx < ctx.lastScheduleList.length) {
+            const event = ctx.lastScheduleList[idx];
+            return formatScheduleDetail(event);
+          } else {
+            return '指定された番号の予定が見つかりません。';
+          }
+        }
+      }
       // ユーザー発話から日付・時間帯を抽出
-      const text = message.content || '';
       const baseDateStr = await parseJapaneseDateHybrid(text, new Date());
       debugLog('発話:', text, '→ パース結果:', baseDateStr);
       function toYMD(date: Date) {
@@ -134,6 +148,20 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       // intentがunknownでもpendingEventがあれば肯定返答を優先的に処理
       const ctx = getConversationContext();
       const text = message.content?.trim();
+      // 番号指定で詳細取得
+      if (ctx.lastScheduleList && ctx.lastScheduleList.length > 0 && text) {
+        const match = text.match(/^(\d+)の詳細/);
+        if (match) {
+          const idx = parseInt(match[1], 10) - 1;
+          if (idx >= 0 && idx < ctx.lastScheduleList.length) {
+            const event = ctx.lastScheduleList[idx];
+            // 詳細を返す
+            return formatScheduleDetail(event);
+          } else {
+            return '指定された番号の予定が見つかりません。';
+          }
+        }
+      }
       if (ctx.pendingEvent && text && /^(はい|追加|ok|ＯＫ|お願いします|登録|削除|消して|消去|実行|変更|修正)/i.test(text)) {
         // add
         if (ctx.pendingEvent.start && ctx.pendingEvent.summary) {

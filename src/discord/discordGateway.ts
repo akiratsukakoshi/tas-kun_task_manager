@@ -33,6 +33,9 @@ function shouldTrigger(rule: RoomRule | undefined, message: any, clientUserId: s
   return false;
 }
 
+// スレッドごとの最終Bot発話情報
+const lastBotReply: Record<string, { timestamp: number, userId: string }> = {};
+
 export const makeDiscordGateway = (cfg: any) => {
   const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
   // ルールは起動時に一度だけ読み込む（必要ならホットリロードも可）
@@ -42,7 +45,16 @@ export const makeDiscordGateway = (cfg: any) => {
     if (m.author.bot) return;
     if (!client.user) return;
     const rule = getRuleForRoom(m.channelId, roomRules.rules);
-    if (!shouldTrigger(rule, m, client.user.id)) return;
+    // --- 新ロジック: 直近Bot発話が2分以内かつ同じユーザー ---
+    let triggered = shouldTrigger(rule, m, client.user.id);
+    if (!triggered) {
+      const threadId = m.channelId;
+      const last = lastBotReply[threadId];
+      if (last && last.userId === m.author.id && Date.now() - last.timestamp < 2 * 60 * 1000) {
+        triggered = true;
+      }
+    }
+    if (!triggered) return;
     addMessageToHistory(m.author.id, m.content);
     const history = getUserContext(m.author.id).history;
     const historyText = history.map(h => h.content).join('\n');
@@ -54,6 +66,8 @@ export const makeDiscordGateway = (cfg: any) => {
     const reply = await executeWorkflow(intentResult, m, cfg);
     if (reply) {
       await m.reply(reply);
+      // --- Bot発話記録 ---
+      lastBotReply[m.channelId] = { timestamp: Date.now(), userId: m.author.id };
     }
   });
 
