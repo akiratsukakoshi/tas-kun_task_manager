@@ -1,0 +1,14 @@
+# room_rules.example.yaml
+# 本ファイルはサンプルです。実際のroom_rules.yamlには本番のroom_idを記載してください。
+# このファイルはgit管理し、room_rules.yamlは.gitignore推奨です。
+rules:
+  - id: general
+    description: サーバー全体のデフォルトルール
+    trigger:
+      - mention
+      - keyword: "カレン"
+  - id: bot_room
+    room_ids: ["1234567890"]  # ここに実際のルームIDを記載
+    description: bot専用ルームでは全発言に応答
+    trigger:
+      - all 

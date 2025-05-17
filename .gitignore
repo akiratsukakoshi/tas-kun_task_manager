@@ -23,6 +23,7 @@ build/
 
 # Config
 config/config.yaml
+config/room_rules.yaml
 
 # Token
 token.json 

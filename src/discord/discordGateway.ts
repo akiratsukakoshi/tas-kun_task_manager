@@ -2,12 +2,47 @@ import { Client, GatewayIntentBits, Events } from 'discord.js';
 import { classifyIntentWithLLM } from '../workflow/intentClassifier.js';
 import { executeWorkflow } from '../workflow/workflowExecutor.js';
 import { addMessageToHistory, getUserContext } from '../context/contextManager.js';
+import { loadYaml } from '../utils/yamlLoader.js';
+
+// ルームルール型
+interface RoomRule {
+  id: string;
+  room_ids?: string[];
+  description?: string;
+  trigger: Array<'mention' | { keyword: string } | 'all'>;
+}
+interface RoomRulesYaml { rules: RoomRule[]; }
+
+function getRuleForRoom(roomId: string, rules: RoomRule[]): RoomRule | undefined {
+  // 個別ルームルールを優先
+  const specific = rules.find(r => r.room_ids && r.room_ids.includes(roomId));
+  if (specific) return specific;
+  // なければgeneral
+  return rules.find(r => r.id === 'general');
+}
+
+function shouldTrigger(rule: RoomRule | undefined, message: any, clientUserId: string): boolean {
+  if (!rule || !rule.trigger) return false;
+  for (const trig of rule.trigger) {
+    if (trig === 'all') return true;
+    if (trig === 'mention' && message.mentions.has(clientUserId)) return true;
+    if (typeof trig === 'object' && 'keyword' in trig) {
+      if (message.content.includes(trig.keyword)) return true;
+    }
+  }
+  return false;
+}
 
 export const makeDiscordGateway = (cfg: any) => {
   const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+  // ルールは起動時に一度だけ読み込む（必要ならホットリロードも可）
+  const roomRules: RoomRulesYaml = loadYaml<RoomRulesYaml>('config/room_rules.yaml');
 
   client.on(Events.MessageCreate, async (m) => {
     if (m.author.bot) return;
+    if (!client.user) return;
+    const rule = getRuleForRoom(m.channelId, roomRules.rules);
+    if (!shouldTrigger(rule, m, client.user.id)) return;
     addMessageToHistory(m.author.id, m.content);
     const history = getUserContext(m.author.id).history;
     const historyText = history.map(h => h.content).join('\n');

@@ -1,9 +1,11 @@
 rules:
   - id: general
-    description: 一般ルームではメンション時のみ応答
-    examples: ["@カレン 明日の予定教えて"]
-    priority: 1
+    description: サーバー全体のデフォルトルール
+    trigger:
+      - mention
+      - keyword: "カレン"
   - id: bot_room
+    room_ids: ["1234567890"]  # 例: カレンダー専用ルームID
     description: bot専用ルームでは全発言に応答
-    examples: ["明日14時に会議入れて"]
-    priority: 2 
+    trigger:
+      - all 
