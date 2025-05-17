@@ -1,4 +1,19 @@
+# タスク管理用ワークフロー定義
+
 workflows:
+  - intent: add_task
+    executor: addTask
+    description: タスクを新規追加する
+  - intent: get_tasks
+    executor: listTasks
+    description: タスク一覧を取得する
+  - intent: update_task
+    executor: updateTask
+    description: タスク内容や期限を更新する
+  - intent: complete_task
+    executor: completeTask
+    description: タスクを完了にする
+
   add_schedule:
     description: 予定追加
     steps:

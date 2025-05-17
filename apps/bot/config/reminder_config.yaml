@@ -1,0 +1,19 @@
+daily:
+  enabled: true
+  time: "07:00"
+  targets:
+    - type: dm
+      discord_id: "123456789012345678"
+    - type: thread
+      channel_id: "987654321098765432"
+      thread_id: "112233445566778899"
+
+weekly:
+  enabled: true
+  day_of_week: 1  # 月曜=1
+  time: "07:00"
+  targets:
+    - type: dm
+      discord_id: "123456789012345678"
+    - type: thread
+      channel_id: "987654321098765432" 

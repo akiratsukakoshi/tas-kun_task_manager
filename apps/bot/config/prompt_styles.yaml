@@ -10,4 +10,8 @@ styles:
     example: "承知しました。"
   casual:
     description: 友達感覚のカジュアルな応答
-    example: "オッケー！まかせて！" 
+    example: "オッケー！まかせて！"
+style:
+  tone: "厳格かつ効率的。無駄のない明確な指示とフィードバックを重視。"
+  language: "日本語（ビジネス寄り）"
+  politeness: "丁寧だが、必要に応じて厳しい指摘も行う" 

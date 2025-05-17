@@ -1,0 +1,13 @@
+bot:
+  name: tas-kun
+  version: 0.1.0
+  ignoreBots: true
+llm:
+  model: gpt-4o-mini
+  temperature: 0.7
+calendar:
+  default_calendar_id: tukapontas@gmail.com
+# OpenAI API連携用（.envで上書き可）
+openai_api_key: "${OPENAI_API_KEY}"
+openai_api_base: "${OPENAI_API_BASE}"
+openai_model: "${OPENAI_MODEL}"
