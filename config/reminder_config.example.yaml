@@ -1,0 +1,24 @@
+# 定期リマインダー設定例
+# DiscordのDMやスレッドに予定をリマインド送信できます
+
+daily:
+  enabled: true
+  time: "07:00"  # 毎朝7時
+  targets:
+    - type: dm
+      discord_id: "111111111111111111"  # ダミーユーザーID
+    - type: thread
+      channel_id: "222222222222222222"  # ダミーチャンネルID
+      thread_id: "333333333333333333"   # ダミースレッドID
+
+weekly:
+  enabled: true
+  day_of_week: 1  # 月曜=1
+  time: "07:00"
+  targets:
+    - type: dm
+      discord_id: "111111111111111111"
+    - type: thread
+      channel_id: "222222222222222222"
+
+</rewritten_file> 

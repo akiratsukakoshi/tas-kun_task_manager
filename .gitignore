@@ -24,6 +24,7 @@ build/
 # Config
 config/config.yaml
 config/room_rules.yaml
+config/reminder_config.yaml
 
 # Token
 token.json 

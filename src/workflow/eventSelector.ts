@@ -80,10 +80,10 @@ export function filterEventsByTitleAndDate(
 
 /**
  * LLMでadd/modify/delete用の予定情報を抽出する
- * intent: 'add' | 'modify' | 'delete'
+ * intent: 'add' | 'modify' | 'delete' | 'remind'
  * @returns 必要な情報を含むオブジェクト or null
  */
-export async function extractEventInfoWithLLM(message: string, intent: 'add' | 'modify' | 'delete'): Promise<any> {
+export async function extractEventInfoWithLLM(message: string, intent: 'add' | 'modify' | 'delete' | 'remind'): Promise<any> {
   let systemPrompt = '';
   if (intent === 'add' || intent === 'modify') {
     systemPrompt = `
@@ -102,6 +102,15 @@ export async function extractEventInfoWithLLM(message: string, intent: 'add' | '
 例:
 ユーザー: 5月20日のAさんとの会議を削除して
 出力: {"summary": "Aさんとの会議", "date": "2025-05-20"}
+`;
+  } else if (intent === 'remind') {
+    systemPrompt = `
+あなたはユーザーの発話からリマインド設定情報を抽出するAIです。
+発話から「タイトル（summary）」と「リマインド時刻（remindAt）」をISO8601形式でJSONで出力してください。
+抽出できない場合はnullを返してください。
+例:
+ユーザー: 明日の10時に「打ち合わせ」をリマインドして
+出力: {"summary": "打ち合わせ", "remindAt": "2025-05-18T10:00:00+09:00"}
 `;
   }
   const userPrompt = `ユーザー: ${message}\n出力:`;

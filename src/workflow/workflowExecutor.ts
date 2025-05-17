@@ -103,12 +103,27 @@ export async function executeWorkflow(intentResult: IntentResult, message: any, 
       return `以下の内容で予定を変更します。修正があれば返信してください\nタイトル: ${info.summary}\n開始: ${info.start}\n終了: ${info.end || '未定'}`;
     }
     case 'remind': {
-      // 1. 発話からEventCriteriaを抽出
+      // 1. 発話からリマインド情報を抽出
       const text = message.content || '';
-      const criteria = await extractEventCriteria(text);
-      // 2. 予定一覧を取得し、該当予定を特定（必要に応じて）
-      // 3. リマインド設定（現状はダミー応答）
-      return formatTextResponse('リマインド', 'リマインドを設定します（ダミー応答）');
+      const info = await extractEventInfoWithLLM(text, 'remind');
+      if (!info || !info.summary || !info.remindAt) {
+        return 'リマインド内容を抽出できませんでした。もう少し詳しくご指定下さい。';
+      }
+      // 2. reminders.jsonに保存
+      const fs = await import('fs');
+      const path = 'reminders.json';
+      let reminders = [];
+      if (fs.existsSync(path)) {
+        reminders = JSON.parse(fs.readFileSync(path, 'utf8'));
+      }
+      // Discord送信先は現状ユーザーID（message.author.id）でDMとする
+      reminders.push({
+        summary: info.summary,
+        remindAt: info.remindAt,
+        discordTarget: { type: 'dm', discord_id: message.author?.id || '' }
+      });
+      fs.writeFileSync(path, JSON.stringify(reminders, null, 2), 'utf8');
+      return `「${info.summary}」を${info.remindAt}にリマインドします。`;
     }
     case 'find_free_time': {
       const text = message.content || '';
